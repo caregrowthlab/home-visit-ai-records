@@ -18,32 +18,32 @@ export function RecordsPageClient() {
       try {
         const res = await fetch("/api/records");
         const text = await res.text();
-
+    
         let data: unknown;
         try {
           data = JSON.parse(text);
         } catch {
           throw new Error("APIがJSONを返していません: " + text.slice(0, 100));
         }
-
+    
         if (!res.ok) {
           const errMsg =
             data && typeof data === "object" && "error" in data
-              ? String((data as { error: unknown }).error)
+              ? String((data as { error?: unknown }).error ?? "APIエラー")
               : "APIエラー";
-          setState({ status: "error", error: errMsg });
-          return;
+          throw new Error(errMsg);
         }
-
+    
         const records = Array.isArray(data) ? data : [];
         setState({ status: "ok", records });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "予期しないエラーが発生しました。";
+        const msg =
+          err instanceof Error ? err.message : "予期しないエラーが発生しました。";
         console.error("[RecordsPage] /api/records fetch error:", err);
         setState({ status: "error", error: msg });
       }
     }
-
+    
     fetchRecords();
   }, []);
 

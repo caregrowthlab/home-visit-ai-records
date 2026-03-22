@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
       console.error("[api/patients GET] Supabase select error:", {
         message: error.message,
         code: error.code,
+        details: error.details,
+        hint: error.hint,
+        fullError: String(error),
       });
       return NextResponse.json(
         { error: `患者一覧の取得に失敗しました: ${error.message}` },
@@ -37,7 +40,12 @@ export async function GET(request: NextRequest) {
     const patients = data ?? [];
     return NextResponse.json({ patients });
   } catch (err) {
-    console.error("Patients API error:", err);
+    console.error("[api/patients GET] fetch/接続エラー 詳細:", {
+      name: err instanceof Error ? err.name : "Unknown",
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      cause: err instanceof Error ? err.cause : undefined,
+    });
     return NextResponse.json(
       { error: "予期しないエラーが発生しました。" },
       { status: 500 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button, Textarea } from "@/components/ui";
+import { fetchApi } from "@/lib/fetch-api";
 import { cn } from "@/lib/utils";
 import type { PromptType } from "@/lib/prompts";
 
@@ -41,17 +42,19 @@ export function RecordForm() {
       setPatientsLoading(true);
       setPatientsError(null);
       try {
-        const res = await fetch("/api/patients");
-        const data = await res.json();
-        if (!res.ok) {
-          setPatientsError(data.error ?? "患者一覧の取得に失敗しました。");
+        const result = await fetchApi<{ patients?: Patient[] }>("/api/patients");
+        if (!result.ok) {
+          console.error("[RecordForm] /api/patients error:", result.error);
+          setPatientsError(result.error);
           setPatients([]);
           return;
         }
-        const list = Array.isArray(data.patients) ? data.patients : [];
+        const list = Array.isArray(result.data.patients) ? result.data.patients : [];
         setPatients(list);
-      } catch {
-        setPatientsError("通信エラーが発生しました。");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "通信エラーが発生しました。";
+        console.error("[RecordForm] /api/patients fetch error:", err);
+        setPatientsError(msg);
         setPatients([]);
       } finally {
         setPatientsLoading(false);
@@ -68,25 +71,20 @@ export function RecordForm() {
   
     async function fetchLatestRecord() {
       try {
-        const res = await fetch(
-          `/api/records/latest?patient_id=${patientId}`
+        const result = await fetchApi<{ previous_record?: string }>(
+          `/api/records/latest?patient_id=${encodeURIComponent(patientId)}`
         );
-  
-        const data = await res.json();
-  
-        if (!res.ok) {
-          console.error("latest error", data);
+        if (!result.ok) {
+          console.error("[RecordForm] /api/records/latest error:", result.error);
           return;
         }
-  
         const text =
-          typeof data.previous_record === "string"
-            ? data.previous_record
+          typeof result.data.previous_record === "string"
+            ? result.data.previous_record
             : "";
-  
         setPreviousRecord(text);
       } catch (err) {
-        console.error(err);
+        console.error("[RecordForm] /api/records/latest fetch error:", err);
       }
     }
   
@@ -113,7 +111,7 @@ export function RecordForm() {
     clearMessages();
     setIsGenerating(true);
     try {
-      const res = await fetch("/api/generate", {
+      const result = await fetchApi<{ ai_output?: string }>("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -123,17 +121,16 @@ export function RecordForm() {
           prompt_type: promptType,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error ?? "AI生成に失敗しました。");
+      if (!result.ok) {
+        setErrorMessage(result.error);
         return;
       }
-      const next = typeof data.ai_output === "string" ? data.ai_output : "";
+      const next = typeof result.data.ai_output === "string" ? result.data.ai_output : "";
       setAiOutput(next);
       setFinalText(next);
       setSuccessMessage("AIで記録を作成しました。必要なら最終版を編集して保存してください。");
-    } catch {
-      setErrorMessage("通信エラーが発生しました。");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "通信エラーが発生しました。");
     } finally {
       setIsGenerating(false);
     }
@@ -154,7 +151,7 @@ export function RecordForm() {
     clearMessages();
     setIsRevising(true);
     try {
-      const res = await fetch("/api/revise", {
+      const result = await fetchApi<{ revised_output?: string }>("/api/revise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,18 +160,17 @@ export function RecordForm() {
           prompt_type: promptType,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error ?? "再調整に失敗しました。");
+      if (!result.ok) {
+        setErrorMessage(result.error);
         return;
       }
       const revised =
-        typeof data.revised_output === "string" ? data.revised_output : "";
+        typeof result.data.revised_output === "string" ? result.data.revised_output : "";
       setAiOutput(revised);
       setFinalText(revised);
       setSuccessMessage("再調整しました。最終版を確認して保存してください。");
-    } catch {
-      setErrorMessage("通信エラーが発生しました。");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "通信エラーが発生しました。");
     } finally {
       setIsRevising(false);
     }
@@ -204,29 +200,27 @@ export function RecordForm() {
     };
     try {
       if (recordId) {
-        const res = await fetch(`/api/records/${recordId}`, {
+        const result = await fetchApi<{ error?: string }>(`/api/records/${recordId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        if (!res.ok) {
-          setErrorMessage(data.error ?? "保存に失敗しました。");
+        if (!result.ok) {
+          setErrorMessage(result.error);
           return;
         }
         setSuccessMessage("保存しました（更新）。");
       } else {
-        const res = await fetch("/api/records", {
+        const result = await fetchApi<{ id?: string }>("/api/records", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        if (!res.ok) {
-          setErrorMessage(data.error ?? "保存に失敗しました。");
+        if (!result.ok) {
+          setErrorMessage(result.error);
           return;
         }
-        const newId = typeof data.id === "string" ? data.id : null;
+        const newId = typeof result.data.id === "string" ? result.data.id : null;
         if (newId) setRecordId(newId);
         setSuccessMessage(
           newId
@@ -234,8 +228,8 @@ export function RecordForm() {
             : "保存しました（新規）。",
         );
       }
-    } catch {
-      setErrorMessage("通信エラーが発生しました。");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "通信エラーが発生しました。");
     } finally {
       setIsSaving(false);
     }

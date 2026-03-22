@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, Textarea } from "@/components/ui";
+import { fetchApi } from "@/lib/fetch-api";
 import type { RecordDetail } from "@/types";
 
 function formatDate(iso: string | null): string {
@@ -43,25 +44,26 @@ export function RecordDetailForm({ record }: Props) {
     setIsSaving(true);
 
     try {
-      const res = await fetch(`/api/records/${record.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ final_text: finalText }),
-      });
+      const result = await fetchApi<{ error?: string }>(
+        `/api/records/${record.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ final_text: finalText }),
+        }
+      );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage({
-          type: "error",
-          text: data.error ?? "保存に失敗しました。",
-        });
+      if (!result.ok) {
+        setMessage({ type: "error", text: result.error });
         return;
       }
 
       setMessage({ type: "success", text: "保存しました。" });
-    } catch {
-      setMessage({ type: "error", text: "通信エラーが発生しました。" });
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "通信エラーが発生しました。",
+      });
     } finally {
       setIsSaving(false);
     }

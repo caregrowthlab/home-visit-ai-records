@@ -16,11 +16,22 @@ export function getSupabaseEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!url || !key) {
+  if (url === undefined || url === "") {
+    console.error("[Supabase] NEXT_PUBLIC_SUPABASE_URL が未設定または空です");
     throw new Error(
-      "Supabase の環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY（publishable key）を設定してください。"
+      "Supabase の環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_URL を設定してください。"
     );
   }
+
+  if (!key || key.trim() === "") {
+    console.error("[Supabase] NEXT_PUBLIC_SUPABASE_ANON_KEY が未設定または空です");
+    throw new Error(
+      "Supabase の環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_ANON_KEY（publishable key）を設定してください。"
+    );
+  }
+
+  console.log("[Supabase] supabaseUrl:", url);
+  console.log("[Supabase] supabaseAnonKey (先頭5文字):", key.slice(0, 5) + "***");
 
   return { url, key };
 }

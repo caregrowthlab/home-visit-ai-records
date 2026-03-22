@@ -42,14 +42,37 @@ export function RecordForm() {
       setPatientsLoading(true);
       setPatientsError(null);
       try {
-        const result = await fetchApi<{ patients?: Patient[] }>("/api/patients");
-        if (!result.ok) {
-          console.error("[RecordForm] /api/patients error:", result.error);
-          setPatientsError(result.error);
+        const res = await fetch("/api/patients");
+        const text = await res.text();
+
+        let data: unknown;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error(
+            "[RecordForm] /api/patients JSONパース失敗 本文先頭120文字:",
+            text.slice(0, 120)
+          );
+          setPatientsError("患者一覧の取得に失敗しました。APIがJSONを返していません。");
           setPatients([]);
           return;
         }
-        const list = Array.isArray(result.data.patients) ? result.data.patients : [];
+
+        if (!res.ok) {
+          const errMsg =
+            data && typeof data === "object" && "error" in data
+              ? String((data as { error: unknown }).error)
+              : "患者一覧の取得に失敗しました。";
+          console.error("[RecordForm] /api/patients error:", errMsg);
+          setPatientsError(errMsg);
+          setPatients([]);
+          return;
+        }
+
+        const list =
+          data && typeof data === "object" && "patients" in data && Array.isArray((data as { patients: unknown }).patients)
+            ? (data as { patients: Patient[] }).patients
+            : [];
         setPatients(list);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "通信エラーが発生しました。";

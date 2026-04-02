@@ -2,3 +2,6 @@
 node_modules
 .env.local
 dist
+# PubMed 看護文献要約
+pubmed-nursing-summary/credentials.json
+pubmed-nursing-summary/token.json

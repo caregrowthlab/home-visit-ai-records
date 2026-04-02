@@ -36,14 +36,21 @@ export function getSupabaseEnv() {
   return { url, key };
 }
 
-/** OpenAI 用: APIキー取得 */
+/** OpenAI 用: APIキー取得（前後の空白は除去。誤コピー対策） */
 export function getOpenAIEnv() {
-  const key = process.env.OPENAI_API_KEY;
+  const raw = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
-  if (!key?.trim()) {
+  const key = raw?.trim() ?? "";
+  if (!key) {
     throw new Error(
-      "OpenAI の環境変数が設定されていません。OPENAI_API_KEY を設定してください。"
+      "OpenAI の環境変数が設定されていません。プロジェクト直下の .env.local に OPENAI_API_KEY を設定し、開発サーバーを再起動してください。"
+    );
+  }
+
+  if (!key.startsWith("sk-")) {
+    console.warn(
+      "[OpenAI] OPENAI_API_KEY は通常 sk- で始まります。値のコピー漏れや別の値が入っていないか確認してください。"
     );
   }
 

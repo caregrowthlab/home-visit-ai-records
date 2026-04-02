@@ -3,6 +3,7 @@ import { getOpenAIEnv } from "@/lib/env";
 import {
   getGenerateUserContent,
   getPrompt,
+  type GenerationMode,
   type PromptType,
 } from "@/lib/prompts";
 
@@ -35,14 +36,16 @@ export function getOpenAI(): OpenAI {
 export async function generateDraft(
   previousRecord: string,
   currentInput: string,
-  promptType: PromptType = "dar"
+  promptType: PromptType = "dar",
+  mode: GenerationMode = "normal"
 ): Promise<string> {
   const openai = getOpenAI();
   const { model } = getOpenAIEnv();
   const systemPrompt = getPrompt(
     promptType,
     previousRecord,
-    currentInput
+    currentInput,
+    mode
   );
 
   const userContent = getGenerateUserContent(

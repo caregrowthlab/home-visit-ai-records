@@ -1,10 +1,24 @@
+import { AuthenticationError } from "openai";
 import { NextResponse } from "next/server";
 import { generateDraft } from "@/lib/openai";
-import { PROMPT_TYPES, type PromptType } from "@/lib/prompts";
+import {
+  PROMPT_TYPES,
+  resolveGenerationMode,
+  type PromptType,
+} from "@/lib/prompts";
 
 export async function POST(request: Request) {
+  let body: Record<string, unknown>;
   try {
-    const body = await request.json();
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json(
+      { error: "リクエストの形式が正しくありません。" },
+      { status: 400 }
+    );
+  }
+
+  try {
 
     let patientId: string | number | null = null;
     if (typeof body.patient_id === "number") {
@@ -48,6 +62,8 @@ export async function POST(request: Request) {
         ? (body.prompt_type as PromptType)
         : "dar";
 
+    const mode = resolveGenerationMode(body.mode);
+
     if (!currentInput.trim()) {
       return NextResponse.json(
         { error: "今回メモを入力してください。" },
@@ -58,28 +74,36 @@ export async function POST(request: Request) {
     const generatedText = await generateDraft(
       previousRecord.trim(),
       currentInput.trim(),
-      promptType
+      promptType,
+      mode
     );
 
     return NextResponse.json({ ai_output: generatedText });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Generate API error:", err);
 
     const message =
       err instanceof Error ? err.message : "AI生成中にエラーが発生しました。";
 
     let errorText = "AI生成に失敗しました。しばらく経ってから再度お試しください。";
-    if (message.includes("OPENAI") || message.includes("環境変数")) {
+    if (
+      message.includes("DAR形式") ||
+      message.includes("応答を生成できません") ||
+      message.includes("AI が応答")
+    ) {
+      errorText = message;
+    } else if (message.includes("OPENAI") || message.includes("環境変数")) {
       errorText = message;
     } else if (message.includes("rate limit") || message.includes("429")) {
       errorText =
         "リクエスト回数が上限に達しました。しばらく待ってからお試しください。";
     } else if (
+      err instanceof AuthenticationError ||
       message.includes("401") ||
       message.includes("Incorrect API key")
     ) {
       errorText =
-        "OpenAI API キーが正しくありません。環境変数を確認してください。";
+        "OpenAI API キーが無効です。プロジェクト直下の .env.local の OPENAI_API_KEY を確認し、保存後に開発サーバー（npm run dev）を再起動してください。キーは platform.openai.com の API keys から再発行できます。";
     } else if (message.includes("insufficient_quota")) {
       errorText =
         "OpenAI の利用枠が不足しています。アカウントを確認してください。";

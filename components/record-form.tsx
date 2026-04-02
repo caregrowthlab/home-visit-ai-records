@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button, Textarea } from "@/components/ui";
 import { fetchApi } from "@/lib/fetch-api";
 import { cn } from "@/lib/utils";
-import type { PromptType } from "@/lib/prompts";
+import type { GenerationMode, PromptType } from "@/lib/prompts";
 
 const REVISE_PLACEHOLDER =
   "例：「Focusを2つにまとめる」「生活情報だけ短く」「SOAPのAをもう少し具体的に」";
@@ -21,6 +21,7 @@ export function RecordForm() {
   const [previousRecord, setPreviousRecord] = useState("");
   const [inputText, setInputText] = useState("");
   const [promptType, setPromptType] = useState<PromptType>("dar");
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("normal");
   const [aiOutput, setAiOutput] = useState("");
   const [finalText, setFinalText] = useState("");
   const [instruction, setInstruction] = useState("");
@@ -142,6 +143,7 @@ export function RecordForm() {
           previous_record: previousRecord,
           input_text: inputText.trim(),
           prompt_type: promptType,
+          mode: generationMode,
         }),
       });
       if (!result.ok) {
@@ -377,6 +379,47 @@ export function RecordForm() {
               </div>
               <p className="text-xs text-slate-500">
                 DAR（Data / Action / Response）または SOAP（S / O / A / P）
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <span className="text-sm font-medium text-slate-700">
+                生成モード
+              </span>
+              <div
+                className="inline-flex rounded-xl border border-line bg-slate-50 p-1"
+                role="group"
+                aria-label="生成モード"
+              >
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setGenerationMode("normal")}
+                  className={cn(
+                    "min-w-[7rem] flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    generationMode === "normal"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-slate-600 hover:bg-white",
+                  )}
+                >
+                  通常
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setGenerationMode("audit")}
+                  className={cn(
+                    "min-w-[7rem] flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    generationMode === "audit"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-slate-600 hover:bg-white",
+                  )}
+                >
+                  監査
+                </button>
+              </div>
+              <p className="text-xs text-slate-500">
+                通常は日々の記録向け。監査は第三者確認・指摘を意識した表現を優先します。
               </p>
             </div>
 

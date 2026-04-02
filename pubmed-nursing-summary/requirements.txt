@@ -1,0 +1,12 @@
+# PubMed 看護文献要約スクリプト
+# PubMed API 用（SSL トラブルシュートで requests 使用）
+requests>=2.28.0
+# Google Sheets 連携を使う場合のみ以下をインストール：
+# pip install -r requirements.txt
+
+# Google Sheets 連携（サービスアカウント credentials.json 使用）
+gspread>=6.0.0
+google-auth>=2.0.0
+
+# X (Twitter) 投稿
+tweepy>=4.14.0

@@ -102,8 +102,12 @@ export async function POST(request: Request) {
       message.includes("401") ||
       message.includes("Incorrect API key")
     ) {
+      const projHint =
+        message.includes("sk-proj") || message.includes("sk-proj-")
+          ? " sk-proj- で始まるキーは、そのキーを発行したプロジェクトの ID を .env.local の OPENAI_PROJECT_ID に設定してください（platform.openai.com → Projects → 該当プロジェクト → Settings → General）。"
+          : "";
       errorText =
-        "OpenAI API キーが無効です。プロジェクト直下の .env.local の OPENAI_API_KEY を確認し、保存後に開発サーバー（npm run dev）を再起動してください。キーは platform.openai.com の API keys から再発行できます。";
+        `OpenAI API の認証に失敗しました。${projHint} OPENAI_API_KEY を確認し、保存後に開発サーバー（npm run dev）を再起動してください。`;
     } else if (message.includes("insufficient_quota")) {
       errorText =
         "OpenAI の利用枠が不足しています。アカウントを確認してください。";

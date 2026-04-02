@@ -27,8 +27,12 @@ const REVISION_SYSTEM_PROMPT = `
 
 export function getOpenAI(): OpenAI {
   if (!client) {
-    const { apiKey } = getOpenAIEnv();
-    client = new OpenAI({ apiKey });
+    const { apiKey, organization, project } = getOpenAIEnv();
+    client = new OpenAI({
+      apiKey,
+      ...(organization ? { organization } : {}),
+      ...(project ? { project } : {}),
+    });
   }
   return client;
 }

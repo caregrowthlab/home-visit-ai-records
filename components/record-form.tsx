@@ -10,7 +10,7 @@ import type { GenerationMode, PromptType } from "@/lib/prompts";
 const REVISE_PLACEHOLDER =
   "例：「Focusを2つにまとめる」「生活情報だけ短く」「SOAPのAをもう少し具体的に」";
 
-type Patient = { id: string; patient_name: string; patient_code: string | null };
+type Patient = { id: string; patient_name: string };
 
 export function RecordForm() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -302,7 +302,7 @@ export function RecordForm() {
               </option>
               {patients.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.patient_name}（{p.patient_code ?? "—"}）
+                  {p.patient_name}
                 </option>
               ))}
             </select>

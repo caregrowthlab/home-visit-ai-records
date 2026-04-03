@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isUuidString } from "@/lib/is-uuid";
 import { getSupabase } from "@/lib/supabase";
 
 /** 患者の最新記録1件を取得（前回記録欄の自動表示用） */
@@ -7,9 +8,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const patientId = searchParams.get("patient_id")?.trim();
 
-    if (!patientId) {
+    if (!patientId || !isUuidString(patientId)) {
       return NextResponse.json(
-        { error: "patient_id を指定してください。" },
+        { error: "patient_id には患者の UUID（patients.id）を指定してください。" },
         { status: 400 }
       );
     }

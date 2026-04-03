@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUuidString } from "@/lib/is-uuid";
 import { getSupabase } from "@/lib/supabase";
 import { PROMPT_TYPES, type PromptType } from "@/lib/prompts";
 
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
       ? (promptTypeRaw as PromptType)
       : "dar";
 
-    if (!patientId) {
+    if (!patientId || !isUuidString(patientId)) {
       return NextResponse.json(
         { error: "患者を選択してください。" },
         { status: 400 }

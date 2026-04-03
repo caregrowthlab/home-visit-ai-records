@@ -18,9 +18,8 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("patients")
-      .select("id, patient_name, patient_code")
+      .select("id, patient_name")
       .eq("organization_id", organizationId)
-      .eq("is_active", true)
       .order("patient_name");
 
     if (error) {

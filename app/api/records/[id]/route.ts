@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUuidString } from "@/lib/is-uuid";
 import { getSupabase } from "@/lib/supabase";
 import { PROMPT_TYPES, type PromptType } from "@/lib/prompts";
 

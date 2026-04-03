@@ -1,6 +1,7 @@
 import { AuthenticationError } from "openai";
 import { NextResponse } from "next/server";
 import { generateDraft } from "@/lib/openai";
+import { isUuidString } from "@/lib/is-uuid";
 import {
   PROMPT_TYPES,
   resolveGenerationMode,
@@ -20,27 +21,11 @@ export async function POST(request: Request) {
 
   try {
 
-    let patientId: string | number | null = null;
-    if (typeof body.patient_id === "number") {
-      patientId = body.patient_id;
-    } else if (typeof body.patient_id === "string") {
-      const trimmed = body.patient_id.trim();
-      if (trimmed === "") {
-        patientId = null;
-      } else {
-        const asNum = Number(trimmed);
-        patientId = Number.isNaN(asNum) ? trimmed : asNum;
-      }
-    }
+    const patientIdRaw = body.patient_id;
+    const patientId =
+      typeof patientIdRaw === "string" ? patientIdRaw.trim() : "";
 
-    if (patientId === null) {
-      return NextResponse.json(
-        { error: "患者を選択してください。" },
-        { status: 400 }
-      );
-    }
-
-    if (typeof patientId === "number" && Number.isNaN(patientId)) {
+    if (!patientId || !isUuidString(patientId)) {
       return NextResponse.json(
         { error: "患者を選択してください。" },
         { status: 400 }

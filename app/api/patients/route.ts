@@ -7,7 +7,7 @@ const PATIENTS_LIST_SELECT = "id, patient_name" as const;
 
 /** 患者一覧取得（ログインユーザーの organization に属する患者のみ） */
 export async function GET(request: NextRequest) {
-  console.log("🔥🔥🔥 patients API v4");
+  console.log("🔥🔥🔥 強制変更確認");
 
   try {
     const organizationId = await getOrganizationId(request);
